@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -562,6 +563,13 @@ func validateRedirectURI(client storage.Client, redirectURI string) bool {
 			if redirectURI == uri {
 				return true
 			}
+			// Only perform insecure regex checks on anchored regexes
+			if uri[0] == '^' && uri[len(uri)-1] == '$' {
+                matched, err := regexp.MatchString(uri, redirectURI)
+                if err == nil && matched {
+                    return true
+                }
+            }
 		}
 		return false
 	}

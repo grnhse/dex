@@ -267,6 +267,27 @@ func TestValidRedirectURI(t *testing.T) {
 			client: storage.Client{
 				RedirectURIs: []string{"http://foo.com/bar"},
 			},
+			redirectURI: "http://foo.com/",
+			wantValid:   false,
+		},
+		{
+			client: storage.Client{
+				RedirectURIs: []string{"^http://[^ ]+.com/bar$"},
+			},
+			redirectURI: "http://foo.com/bar",
+			wantValid:   true,
+		},
+		{
+			client: storage.Client{
+				RedirectURIs: []string{"^http://[^ ]+.com/bar"},
+			},
+			redirectURI: "http://foo.com/bar",
+			wantValid:   false,
+		},
+		{
+			client: storage.Client{
+				RedirectURIs: []string{"http://foo.com/bar"},
+			},
 			redirectURI: "http://foo.com/bar/baz",
 		},
 		{
