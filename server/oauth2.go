@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +24,6 @@ import (
 	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/dexidp/dex/connector"
-	"github.com/dexidp/dex/server/internal"
 	"github.com/dexidp/dex/storage"
 )
 
@@ -294,20 +294,9 @@ func (s *Server) newIDToken(clientID string, claims storage.Claims, scopes []str
 	issuedAt := s.now()
 	expiry = issuedAt.Add(s.idTokensValidFor)
 
-	sub := &internal.IDTokenSubject{
-		UserId: claims.UserID,
-		ConnId: connID,
-	}
-
-	subjectString, err := internal.Marshal(sub)
-	if err != nil {
-		s.logger.Errorf("failed to marshal offline session ID: %v", err)
-		return "", expiry, fmt.Errorf("failed to marshal offline session ID: %v", err)
-	}
-
 	tok := idTokenClaims{
 		Issuer:   s.issuerURL.String(),
-		Subject:  subjectString,
+		Subject:  claims.UserID,
 		Nonce:    nonce,
 		Expiry:   expiry.Unix(),
 		IssuedAt: issuedAt.Unix(),
@@ -561,6 +550,13 @@ func validateRedirectURI(client storage.Client, redirectURI string) bool {
 		for _, uri := range client.RedirectURIs {
 			if redirectURI == uri {
 				return true
+			}
+			// Only perform insecure regex checks on anchored regexes
+			if uri[0] == '^' && uri[len(uri)-1] == '$' {
+				matched, err := regexp.MatchString(uri, redirectURI)
+				if err == nil && matched {
+					return true
+				}
 			}
 		}
 		return false
