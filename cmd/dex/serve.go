@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/dexidp/dex/api"
+	"github.com/dexidp/dex/api/v2"
 	"github.com/dexidp/dex/pkg/log"
 	"github.com/dexidp/dex/server"
 	"github.com/dexidp/dex/storage"
@@ -166,7 +166,7 @@ func serve(cmd *cobra.Command, args []string) error {
 				}
 				c.StaticClients[i].ID = os.Getenv(client.IDEnv)
 			}
-			if client.Secret == "" && client.SecretEnv == "" {
+			if client.Secret == "" && client.SecretEnv == "" && !client.Public {
 				return fmt.Errorf("invalid config: Secret or SecretEnv field is required for client %q", client.ID)
 			}
 			if client.SecretEnv != "" {
@@ -269,7 +269,14 @@ func serve(cmd *cobra.Command, args []string) error {
 		logger.Infof("config auth requests valid for: %v", authRequests)
 		serverConfig.AuthRequestsValidFor = authRequests
 	}
-
+	if c.Expiry.DeviceRequests != "" {
+		deviceRequests, err := time.ParseDuration(c.Expiry.DeviceRequests)
+		if err != nil {
+			return fmt.Errorf("invalid config value %q for device request expiry: %v", c.Expiry.AuthRequests, err)
+		}
+		logger.Infof("config device requests valid for: %v", deviceRequests)
+		serverConfig.DeviceRequestsValidFor = deviceRequests
+	}
 	serv, err := server.NewServer(context.Background(), serverConfig)
 	if err != nil {
 		return fmt.Errorf("failed to initialize server: %v", err)

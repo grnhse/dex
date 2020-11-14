@@ -59,6 +59,7 @@ func TestInvalidConfiguration(t *testing.T) {
 		t.Fatalf("Expected error message to be %q, got %q", wanted, got)
 	}
 }
+
 func TestUnmarshalConfig(t *testing.T) {
 	rawConfig := []byte(`
 issuer: http://127.0.0.1:5556/dex
@@ -119,6 +120,7 @@ expiry:
   signingKeys: "7h"
   idTokens: "25h"
   authRequests: "25h"
+  deviceRequests: "10m"
 
 logger:
   level: "debug"
@@ -197,9 +199,10 @@ logger:
 			},
 		},
 		Expiry: Expiry{
-			SigningKeys:  "7h",
-			IDTokens:     "25h",
-			AuthRequests: "25h",
+			SigningKeys:    "7h",
+			IDTokens:       "25h",
+			AuthRequests:   "25h",
+			DeviceRequests: "10m",
 		},
 		Logger: Logger{
 			Level:  "debug",
